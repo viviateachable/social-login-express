@@ -72,9 +72,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithLine = async () => {
-    // Line OAuth needs to be configured in Supabase dashboard
-    // For now, we'll return an error message
-    return { error: { message: 'Line OAuth needs to be configured in Supabase dashboard' } };
+    try {
+      const { data, error } = await supabase.functions.invoke('line-auth/login', {
+        method: 'POST'
+      });
+      
+      if (error) {
+        return { error };
+      }
+      
+      // Redirect to Line OAuth URL
+      if (data?.authUrl) {
+        window.location.href = data.authUrl;
+        return { error: null };
+      }
+      
+      return { error: { message: '無法取得 Line 登入網址' } };
+    } catch (error) {
+      return { error: { message: 'Line 登入失敗' } };
+    }
   };
 
   const signOut = async () => {
