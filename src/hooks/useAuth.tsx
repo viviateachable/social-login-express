@@ -13,6 +13,15 @@ interface AuthContextType {
   signInWithFacebook: () => Promise<{ error: any }>;
   signInWithGithub: () => Promise<{ error: any }>;
   signInWithTwitter: () => Promise<{ error: any }>;
+  signInWithApple: () => Promise<{ error: any }>;
+  signInWithAzure: () => Promise<{ error: any }>;
+  signInWithDiscord: () => Promise<{ error: any }>;
+  signInWithGitlab: () => Promise<{ error: any }>;
+  signInWithLinkedin: () => Promise<{ error: any }>;
+  signInWithTwitch: () => Promise<{ error: any }>;
+  signInWithNotion: () => Promise<{ error: any }>;
+  signInWithSlack: () => Promise<{ error: any }>;
+  signInWithSpotify: () => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
 }
 
@@ -126,6 +135,96 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const signInWithApple = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
+  const signInWithAzure = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'azure',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
+  const signInWithDiscord = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'discord',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
+  const signInWithGitlab = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'gitlab',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
+  const signInWithLinkedin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'linkedin_oidc',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
+  const signInWithTwitch = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'twitch',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
+  const signInWithNotion = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'notion',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
+  const signInWithSlack = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'slack',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
+  const signInWithSpotify = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'spotify',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
@@ -142,6 +241,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithFacebook,
     signInWithGithub,
     signInWithTwitter,
+    signInWithApple,
+    signInWithAzure,
+    signInWithDiscord,
+    signInWithGitlab,
+    signInWithLinkedin,
+    signInWithTwitch,
+    signInWithNotion,
+    signInWithSlack,
+    signInWithSpotify,
     signOut,
   };
 
