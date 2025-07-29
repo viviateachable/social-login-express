@@ -22,6 +22,7 @@ interface AuthContextType {
   signInWithNotion: () => Promise<{ error: any }>;
   signInWithSlack: () => Promise<{ error: any }>;
   signInWithSpotify: () => Promise<{ error: any }>;
+  signInWithBitbucket: () => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
 }
 
@@ -225,6 +226,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const signInWithBitbucket = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'bitbucket',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
@@ -250,6 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithNotion,
     signInWithSlack,
     signInWithSpotify,
+    signInWithBitbucket,
     signOut,
   };
 
