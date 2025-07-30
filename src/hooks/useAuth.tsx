@@ -23,6 +23,7 @@ interface AuthContextType {
   signInWithSlack: () => Promise<{ error: any }>;
   signInWithSpotify: () => Promise<{ error: any }>;
   signInWithBitbucket: () => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
 }
 
@@ -236,6 +237,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth`
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
@@ -262,6 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithSlack,
     signInWithSpotify,
     signInWithBitbucket,
+    resetPassword,
     signOut,
   };
 

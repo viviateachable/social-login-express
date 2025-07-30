@@ -15,6 +15,8 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [showResetForm, setShowResetForm] = useState(false);
   const navigate = useNavigate();
   
   const { 
@@ -35,7 +37,8 @@ export default function Auth() {
     signInWithNotion,
     signInWithSlack,
     signInWithSpotify,
-    signInWithBitbucket
+    signInWithBitbucket,
+    resetPassword
   } = useAuth();
 
   useEffect(() => {
@@ -246,6 +249,44 @@ export default function Auth() {
   const handleSpotifyAuth = createAuthHandler(signInWithSpotify, "Spotify");
   const handleBitbucketAuth = createAuthHandler(signInWithBitbucket, "Bitbucket");
 
+  const handleResetPassword = async () => {
+    if (!resetEmail) {
+      toast({
+        title: "錯誤",
+        description: "請輸入電子郵件地址",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await resetPassword(resetEmail);
+      if (error) {
+        toast({
+          title: "重設密碼失敗",
+          description: error.message || "請重試",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "重設密碼連結已發送",
+          description: "請檢查您的電子郵件以重設密碼",
+        });
+        setShowResetForm(false);
+        setResetEmail('');
+      }
+    } catch (error) {
+      toast({
+        title: "錯誤",
+        description: "發生未知錯誤，請重試",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
@@ -309,6 +350,53 @@ export default function Auth() {
                 <Mail className="mr-2 h-4 w-4" />
                 {loading ? "登入中..." : "使用電子郵件登入"}
               </Button>
+              
+              <div className="text-center">
+                <Button
+                  variant="link"
+                  className="text-sm text-muted-foreground"
+                  onClick={() => setShowResetForm(!showResetForm)}
+                  disabled={loading}
+                >
+                  忘記密碼？
+                </Button>
+              </div>
+              
+              {showResetForm && (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">重設密碼電子郵件</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="輸入您的電子郵件地址"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowResetForm(false);
+                        setResetEmail('');
+                      }}
+                      className="flex-1"
+                      disabled={loading}
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      onClick={handleResetPassword}
+                      className="flex-1"
+                      disabled={loading}
+                    >
+                      {loading ? "發送中..." : "發送重設連結"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="signup" className="space-y-4">
