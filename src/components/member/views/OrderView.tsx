@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Package, Truck, Check, X, Star, RotateCcw } from 'lucide-react';
+import { Package, Truck, Check, X, Star, RotateCcw, Eye, ShoppingCart, Info } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export function OrderView() {
+  const { toast } = useToast();
+
   const orders = [
     {
       id: '202401001',
@@ -103,6 +107,182 @@ export function OrderView() {
     if (!status) return orders;
     return orders.filter(order => order.status === status);
   };
+
+  // 再次購買功能
+  const handleRepurchase = (order: typeof orders[0]) => {
+    // 將商品加入購物車的邏輯
+    const itemCount = order.items.reduce((total, item) => total + item.quantity, 0);
+    
+    toast({
+      title: "已加入購物車",
+      description: `已將 ${itemCount} 件商品加入購物車，總金額 NT$ ${order.total.toLocaleString()}`,
+    });
+  };
+
+  // 查看詳情組件
+  const OrderDetailsDialog = ({ order }: { order: typeof orders[0] }) => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Eye className="w-4 h-4 mr-1" />
+          查看詳情
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>訂單詳情 #{order.id}</DialogTitle>
+          <DialogDescription>
+            完整的訂單資訊和商品詳情
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          {/* 基本資訊 */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">訂單編號</label>
+              <p className="font-mono">{order.id}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">下單日期</label>
+              <p>{order.date}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">訂單狀態</label>
+              <div className="flex items-center gap-2 mt-1">
+                {getStatusInfo(order.status).icon}
+                {getStatusInfo(order.status).badge}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">訂單總額</label>
+              <p className="text-lg font-semibold text-secondary">NT$ {order.total.toLocaleString()}</p>
+            </div>
+          </div>
+
+          {/* 配送資訊 */}
+          {(order.trackingNumber || order.estimatedDelivery || order.deliveredDate) && (
+            <div className="border rounded-lg p-4 bg-accent/20">
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <Truck className="w-4 h-4" />
+                配送資訊
+              </h4>
+              <div className="space-y-2">
+                {order.trackingNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">物流單號:</span>
+                    <span className="font-mono">{order.trackingNumber}</span>
+                  </div>
+                )}
+                {order.estimatedDelivery && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">預計送達:</span>
+                    <span>{order.estimatedDelivery}</span>
+                  </div>
+                )}
+                {order.deliveredDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">送達日期:</span>
+                    <span>{order.deliveredDate}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 商品清單 */}
+          <div>
+            <h4 className="font-medium mb-3 flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              商品清單
+            </h4>
+            <div className="space-y-3">
+              {order.items.map((item, index) => (
+                <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
+                  <div className="w-20 h-20 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Package className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h5 className="font-medium">{item.name}</h5>
+                    <p className="text-sm text-muted-foreground">
+                      單價: NT$ {item.price.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      數量: {item.quantity}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">
+                      NT$ {(item.price * item.quantity).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* 總計 */}
+            <div className="flex justify-between items-center pt-4 border-t mt-4">
+              <span className="font-medium">總計</span>
+              <span className="text-xl font-bold text-secondary">
+                NT$ {order.total.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          {/* 評價資訊 */}
+          {order.rating && (
+            <div className="border rounded-lg p-4 bg-accent/20">
+              <h4 className="font-medium mb-3 flex items-center gap-2">
+                <Star className="w-4 h-4" />
+                商品評價
+              </h4>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-1">
+                  {[...Array(order.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <span className="text-sm text-muted-foreground">({order.rating}/5)</span>
+              </div>
+              {order.review && (
+                <p className="text-sm">{order.review}</p>
+              )}
+            </div>
+          )}
+
+          {/* 取消原因 */}
+          {order.cancelReason && (
+            <div className="border rounded-lg p-4 bg-red-50 border-red-200">
+              <h4 className="font-medium mb-2 flex items-center gap-2 text-red-700">
+                <Info className="w-4 h-4" />
+                取消原因
+              </h4>
+              <p className="text-sm text-red-600">{order.cancelReason}</p>
+            </div>
+          )}
+
+          {/* 操作按鈕 */}
+          <div className="flex gap-2 pt-4 border-t">
+            {order.status === 'delivered' && (
+              <Button 
+                onClick={() => handleRepurchase(order)}
+                className="bg-gradient-to-r from-primary to-secondary"
+              >
+                <ShoppingCart className="w-4 h-4 mr-1" />
+                再次購買
+              </Button>
+            )}
+            {order.status === 'shipping' && (
+              <Button variant="outline">
+                <Truck className="w-4 h-4 mr-1" />
+                追蹤物流
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 
   const OrderCard = ({ order }: { order: typeof orders[0] }) => {
     const statusInfo = getStatusInfo(order.status);
@@ -206,14 +386,16 @@ export function OrderView() {
                 </Button>
               )}
               {order.status === 'delivered' && (
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleRepurchase(order)}
+                >
                   <RotateCcw className="w-4 h-4 mr-1" />
                   再次購買
                 </Button>
               )}
-              <Button variant="outline" size="sm">
-                查看詳情
-              </Button>
+              <OrderDetailsDialog order={order} />
             </div>
           </div>
         </CardContent>
