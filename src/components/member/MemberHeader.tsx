@@ -1,4 +1,4 @@
-import { Bell, LogOut, User, Check, X, Calendar, Package, Gift, Star } from 'lucide-react';
+import { Bell, LogOut, User, Check, X, Calendar, Package, Gift, Star, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,6 +18,63 @@ export function MemberHeader() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   
+  // 購物車數據
+  const [cartItems, setCartItems] = useState([
+    {
+      id: '1',
+      name: '薰衣草精油',
+      price: 1280,
+      quantity: 2,
+      image: '/placeholder.svg',
+      variant: '10ml'
+    },
+    {
+      id: '2',
+      name: '玫瑰果護膚油',
+      price: 2480,
+      quantity: 1,
+      image: '/placeholder.svg',
+      variant: '30ml'
+    },
+    {
+      id: '3',
+      name: '深層放鬆療程',
+      price: 3800,
+      quantity: 1,
+      image: '/placeholder.svg',
+      variant: '90分鐘'
+    }
+  ]);
+
+  // 計算購物車總數量和小計
+  const cartTotalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const cartSubtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+  // 更新商品數量
+  const updateCartItemQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeCartItem(itemId);
+      return;
+    }
+    
+    setCartItems(prev => 
+      prev.map(item => 
+        item.id === itemId 
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
+
+  // 移除購物車商品
+  const removeCartItem = (itemId: string) => {
+    setCartItems(prev => prev.filter(item => item.id !== itemId));
+    toast({
+      title: "商品已移除",
+      description: "商品已從購物車中移除",
+    });
+  };
+
   // 通知數據
   const [notifications, setNotifications] = useState([
     {
@@ -135,6 +192,121 @@ export function MemberHeader() {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* 購物車下拉菜單 */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative hover:bg-accent">
+              <ShoppingCart className="w-5 h-5" />
+              {cartTotalItems > 0 && (
+                <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">
+                  {cartTotalItems > 9 ? '9+' : cartTotalItems}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-96 bg-popover border border-border">
+            {/* 購物車標題 */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                <span className="font-medium">購物車</span>
+                {cartTotalItems > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {cartTotalItems} 件商品
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* 購物車列表 */}
+            <ScrollArea className="max-h-80">
+              {cartItems.length === 0 ? (
+                <div className="p-6 text-center text-muted-foreground">
+                  <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>購物車是空的</p>
+                </div>
+              ) : (
+                <div className="py-2">
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="px-4 py-3 border-b border-border last:border-b-0"
+                    >
+                      <div className="flex items-start gap-3">
+                        <img 
+                          src={item.image} 
+                          alt={item.name}
+                          className="w-12 h-12 rounded-md object-cover bg-muted"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-foreground line-clamp-1">
+                            {item.name}
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {item.variant}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-medium text-primary">
+                              NT$ {item.price.toLocaleString()}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="w-6 h-6 hover:bg-accent"
+                                onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </Button>
+                              <span className="text-sm font-medium w-8 text-center">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="w-6 h-6 hover:bg-accent"
+                                onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
+                              >
+                                <Plus className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="w-6 h-6 ml-1 hover:bg-destructive/10 hover:text-destructive"
+                                onClick={() => removeCartItem(item.id)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+
+            {/* 小計和結帳 */}
+            {cartItems.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <div className="px-4 py-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium">小計</span>
+                    <span className="text-lg font-bold text-primary">
+                      NT$ {cartSubtotal.toLocaleString()}
+                    </span>
+                  </div>
+                  <Button className="w-full" size="sm">
+                    前往結帳
+                  </Button>
+                </div>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* 通知下拉菜單 */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
