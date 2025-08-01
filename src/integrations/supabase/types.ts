@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      orders: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          newebpay_trade_no: string | null
+          order_number: string
+          payment_method: string | null
+          shipping_info: Json
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items: Json
+          newebpay_trade_no?: string | null
+          order_number: string
+          payment_method?: string | null
+          shipping_info: Json
+          status?: string
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          newebpay_trade_no?: string | null
+          order_number?: string
+          payment_method?: string | null
+          shipping_info?: Json
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          auth_bank: string | null
+          created_at: string
+          id: string
+          merchant_order_no: string
+          newebpay_trade_no: string | null
+          order_id: string
+          payment_type: string | null
+          response_code: string | null
+          response_data: Json | null
+          response_msg: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          auth_bank?: string | null
+          created_at?: string
+          id?: string
+          merchant_order_no: string
+          newebpay_trade_no?: string | null
+          order_id: string
+          payment_type?: string | null
+          response_code?: string | null
+          response_data?: Json | null
+          response_msg?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          auth_bank?: string | null
+          created_at?: string
+          id?: string
+          merchant_order_no?: string
+          newebpay_trade_no?: string | null
+          order_id?: string
+          payment_type?: string | null
+          response_code?: string | null
+          response_data?: Json | null
+          response_msg?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

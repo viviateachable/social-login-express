@@ -1,4 +1,5 @@
 import { Bell, LogOut, User, Check, X, Calendar, Package, Gift, Star, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import { useState } from 'react';
 export function MemberHeader() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // 購物車數據
   const [cartItems, setCartItems] = useState([
@@ -298,7 +300,14 @@ export function MemberHeader() {
                       NT$ {cartSubtotal.toLocaleString()}
                     </span>
                   </div>
-                  <Button className="w-full" size="sm">
+                  <Button 
+                    className="w-full" 
+                    size="sm"
+                    onClick={() => {
+                      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+                      navigate('/checkout', { state: { cartItems } });
+                    }}
+                  >
                     前往結帳
                   </Button>
                 </div>
