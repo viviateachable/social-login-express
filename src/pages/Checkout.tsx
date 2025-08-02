@@ -87,7 +87,7 @@ const Checkout = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('newebpay-checkout', {
+      const { data, error } = await supabase.functions.invoke('create_payment', {
         body: {
           orderData: {
             items: cartItems,
