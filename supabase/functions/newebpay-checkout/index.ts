@@ -131,11 +131,9 @@ serve(async (req) => {
     // 生成檢查碼
     const checkValue = await createCheckValue(tradeInfo, hashKey, hashIV);
 
-    // 使用Base64編碼交易資訊
-    const encoder = new TextEncoder();
+    // 使用Base64編碼交易資訊 (Deno環境)
     const tradeInfoString = JSON.stringify(tradeInfo);
-    const tradeInfoBuffer = encoder.encode(tradeInfoString);
-    const base64TradeInfo = btoa(String.fromCharCode(...new Uint8Array(tradeInfoBuffer)));
+    const base64TradeInfo = btoa(tradeInfoString);
 
     const newebpayData = {
       MerchantID: merchantID,
