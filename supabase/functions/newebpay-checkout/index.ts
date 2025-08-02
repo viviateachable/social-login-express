@@ -26,7 +26,7 @@ interface CheckoutRequest {
 }
 
 // 加密函數
-function createCheckValue(params: Record<string, any>, hashKey: string, hashIV: string): string {
+async function createCheckValue(params: Record<string, any>, hashKey: string, hashIV: string): Promise<string> {
   const sortedParams = Object.keys(params).sort().reduce((result, key) => {
     result[key] = params[key];
     return result;
@@ -38,10 +38,9 @@ function createCheckValue(params: Record<string, any>, hashKey: string, hashIV: 
   const encoder = new TextEncoder();
   const dataBuffer = encoder.encode(data);
   
-  return crypto.subtle.digest("SHA-256", dataBuffer).then(hashBuffer => {
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-  });
+  const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
 }
 
 serve(async (req) => {
@@ -104,7 +103,7 @@ serve(async (req) => {
       throw new Error('Failed to create payment record');
     }
 
-    // 藍新金流參數
+    // 藍新金流參數 - 測試環境設定
     const merchantID = Deno.env.get('NEWEBPAY_MERCHANT_ID')!;
     const hashKey = Deno.env.get('NEWEBPAY_HASH_KEY')!;
     const hashIV = Deno.env.get('NEWEBPAY_HASH_IV')!;
@@ -124,7 +123,7 @@ serve(async (req) => {
       LoginType: 0,
       NotifyURL: `https://trbcpwqvtbieaofirmbi.supabase.co/functions/v1/newebpay-notify`,
       ReturnURL: `https://184abfe0-1648-4cfe-aae5-9a2c57a6932a.lovableproject.com/payment-result`,
-      OrderComment: `訂單編號: ${orderNumber}`,
+      OrderComment: `測試訂單編號: ${orderNumber}`,
       ExpireDate: new Date(expireTime * 1000).toISOString().slice(0, 10),
       ExpireTime: new Date(expireTime * 1000).toTimeString().slice(0, 8)
     };
@@ -132,14 +131,20 @@ serve(async (req) => {
     // 生成檢查碼
     const checkValue = await createCheckValue(tradeInfo, hashKey, hashIV);
 
+    // 使用Base64編碼交易資訊
+    const encoder = new TextEncoder();
+    const tradeInfoString = JSON.stringify(tradeInfo);
+    const tradeInfoBuffer = encoder.encode(tradeInfoString);
+    const base64TradeInfo = btoa(String.fromCharCode(...new Uint8Array(tradeInfoBuffer)));
+
     const newebpayData = {
       MerchantID: merchantID,
-      TradeInfo: Buffer.from(JSON.stringify(tradeInfo)).toString('base64'),
+      TradeInfo: base64TradeInfo,
       TradeSha: checkValue,
       Version: '2.0'
     };
 
-    console.log('Newebpay checkout created:', { orderNumber, amount: orderData.totalAmount });
+    console.log('Newebpay checkout created (TEST MODE):', { orderNumber, amount: orderData.totalAmount });
 
     return new Response(
       JSON.stringify({
@@ -147,7 +152,7 @@ serve(async (req) => {
         orderNumber,
         orderId: order.id,
         newebpayData,
-        paymentUrl: 'https://ccore.newebpay.com/MPG/mpg_gateway'
+        paymentUrl: 'https://ccore.newebpay.com/MPG/mpg_gateway' // 測試環境URL
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
