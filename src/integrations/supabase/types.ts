@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          discount_value: number
+          end_date: string
+          id: string
+          is_special: boolean | null
+          max_discount_amount: number | null
+          min_amount: number | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["coupon_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["coupon_type"]
+          updated_at: string
+          usage_limit: number | null
+          used_count: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_value: number
+          end_date: string
+          id?: string
+          is_special?: boolean | null
+          max_discount_amount?: number | null
+          min_amount?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["coupon_status"] | null
+          title: string
+          type: Database["public"]["Enums"]["coupon_type"]
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_value?: number
+          end_date?: string
+          id?: string
+          is_special?: boolean | null
+          max_discount_amount?: number | null
+          min_amount?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["coupon_status"] | null
+          title?: string
+          type?: Database["public"]["Enums"]["coupon_type"]
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -142,6 +199,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_coupons: {
+        Row: {
+          coupon_id: string
+          created_at: string
+          id: string
+          is_used: boolean | null
+          order_id: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string
+          id?: string
+          is_used?: boolean | null
+          order_id?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string
+          id?: string
+          is_used?: boolean | null
+          order_id?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_coupons_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -150,7 +245,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      coupon_status: "active" | "inactive" | "expired"
+      coupon_type: "percentage" | "fixed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -277,6 +373,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      coupon_status: ["active", "inactive", "expired"],
+      coupon_type: ["percentage", "fixed"],
+    },
   },
 } as const
