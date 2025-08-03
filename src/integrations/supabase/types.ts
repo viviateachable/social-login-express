@@ -242,7 +242,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_test_coupons: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       coupon_status: "active" | "inactive" | "expired"
