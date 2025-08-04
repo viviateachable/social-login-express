@@ -1,19 +1,23 @@
+import { useState } from 'react';
 import { Star, Gift, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RedeemPointsDialog } from '@/components/member/dialogs/RedeemPointsDialog';
 
 export function PointsView() {
-  const pointsData = {
+  const [selectedReward, setSelectedReward] = useState<typeof rewards[0] | null>(null);
+  const [redeemDialogOpen, setRedeemDialogOpen] = useState(false);
+  const [pointsData, setPointsData] = useState({
     current: 1250,
     expiringSoon: 200,
     totalEarned: 3580,
     totalRedeemed: 2330,
     nextTierPoints: 2500,
     currentTier: '金卡會員'
-  };
+  });
 
   const pointsHistory = [
     {
@@ -64,15 +68,15 @@ export function PointsView() {
       name: '9折優惠券',
       points: 100,
       description: '全館商品享9折優惠',
-      type: 'coupon',
-      stock: 'unlimited'
+      type: 'coupon' as const,
+      stock: 'unlimited' as const
     },
     {
       id: 2,
       name: '薰衣草精油小樣 5ml',
       points: 150,
       description: '法國進口薰衣草精油試用裝',
-      type: 'product',
+      type: 'product' as const,
       stock: 50
     },
     {
@@ -80,15 +84,15 @@ export function PointsView() {
       name: '8折優惠券',
       points: 200,
       description: '全館商品享8折優惠',
-      type: 'coupon',
-      stock: 'unlimited'
+      type: 'coupon' as const,
+      stock: 'unlimited' as const
     },
     {
       id: 4,
       name: 'SPA體驗券',
       points: 500,
       description: '價值NT$800的SPA療程體驗',
-      type: 'service',
+      type: 'service' as const,
       stock: 20
     },
     {
@@ -96,7 +100,7 @@ export function PointsView() {
       name: '玫瑰精油 10ml',
       points: 800,
       description: '保加利亞玫瑰精油正裝',
-      type: 'product',
+      type: 'product' as const,
       stock: 10
     },
     {
@@ -104,12 +108,39 @@ export function PointsView() {
       name: 'VIP專屬護理',
       points: 1200,
       description: '120分鐘個人專屬SPA療程',
-      type: 'service',
+      type: 'service' as const,
       stock: 5
     }
   ];
 
   const tierProgress = (pointsData.current / pointsData.nextTierPoints) * 100;
+
+  const handleRedeemClick = (reward: typeof rewards[0]) => {
+    setSelectedReward(reward);
+    setRedeemDialogOpen(true);
+  };
+
+  const handleRedeemSuccess = (pointsUsed: number, rewardName: string) => {
+    // 更新點數餘額
+    setPointsData(prev => ({
+      ...prev,
+      current: prev.current - pointsUsed,
+      totalRedeemed: prev.totalRedeemed + pointsUsed
+    }));
+    
+    // 可以在這裡添加到點數記錄
+    const newRecord = {
+      id: Date.now(),
+      type: 'redeem' as const,
+      amount: -pointsUsed,
+      description: `兌換${rewardName}`,
+      date: new Date().toISOString().split('T')[0],
+      rewardId: `REWARD-${Date.now()}`
+    };
+    
+    // 更新點數歷史記錄（這裡可以連接到實際的狀態管理）
+    pointsHistory.unshift(newRecord);
+  };
 
   const RewardCard = ({ reward }: { reward: typeof rewards[0] }) => (
     <Card className="border-0 shadow-soft bg-card/50 backdrop-blur-sm">
@@ -149,9 +180,11 @@ export function PointsView() {
           
           <Button 
             className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-            disabled={pointsData.current < reward.points}
+            disabled={pointsData.current < reward.points || reward.stock === 0}
+            onClick={() => handleRedeemClick(reward)}
           >
-            {pointsData.current >= reward.points ? '立即兌換' : '點數不足'}
+            {reward.stock === 0 ? '已售完' : 
+             pointsData.current >= reward.points ? '立即兌換' : '點數不足'}
           </Button>
         </div>
       </CardContent>
@@ -301,6 +334,15 @@ export function PointsView() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* 兌換確認對話框 */}
+      <RedeemPointsDialog
+        open={redeemDialogOpen}
+        onOpenChange={setRedeemDialogOpen}
+        reward={selectedReward}
+        userPoints={pointsData.current}
+        onRedeemSuccess={handleRedeemSuccess}
+      />
     </div>
   );
 }
