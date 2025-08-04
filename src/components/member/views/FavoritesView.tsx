@@ -1,10 +1,16 @@
-import { Heart, ShoppingCart, Star, Trash2 } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Trash2, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export function FavoritesView() {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
   const favoriteProducts = [
     {
       id: 1,
@@ -83,20 +89,70 @@ export function FavoritesView() {
     }
   ];
 
+  const [favoriteProductsList, setFavoriteProductsList] = useState(favoriteProducts);
+  const [favoriteServicesList, setFavoriteServicesList] = useState(favoriteServices);
+
+  // 處理加入購物車
+  const handleAddToCart = (product: typeof favoriteProducts[0]) => {
+    toast({
+      title: "已加入購物車",
+      description: `${product.name} 已成功加入購物車`,
+    });
+  };
+
+  // 處理立即預約
+  const handleBookNow = (service: typeof favoriteServices[0]) => {
+    toast({
+      title: "預約功能",
+      description: `即將為您安排 ${service.name} 的預約`,
+    });
+    // TODO: 實際的預約邏輯
+  };
+
+  // 處理刪除收藏
+  const handleRemoveFromFavorites = (id: number, type: 'product' | 'service') => {
+    if (type === 'product') {
+      setFavoriteProductsList(prev => prev.filter(item => item.id !== id));
+    } else {
+      setFavoriteServicesList(prev => prev.filter(item => item.id !== id));
+    }
+    toast({
+      title: "已移除收藏",
+      description: "商品已從收藏清單中移除",
+    });
+  };
+
+  // 處理商品頁面導航
+  const handleProductNavigation = (productId: number) => {
+    navigate(`/products/${productId}`);
+  };
+
+  // 處理療程頁面導航
+  const handleServiceNavigation = (serviceId: number) => {
+    navigate(`/services/${serviceId}`);
+  };
+
   const ProductCard = ({ item }: { item: typeof favoriteProducts[0] }) => (
     <Card className="border-0 shadow-soft bg-card/50 backdrop-blur-sm group hover:shadow-elegant transition-all duration-300">
       <CardHeader className="relative">
-        <div className="aspect-square rounded-lg bg-primary/10 flex items-center justify-center mb-3 overflow-hidden">
+        <div 
+          className="aspect-square rounded-lg bg-primary/10 flex items-center justify-center mb-3 overflow-hidden cursor-pointer group-hover:scale-105 transition-transform duration-300"
+          onClick={() => handleProductNavigation(item.id)}
+        >
           <img 
             src={item.image} 
             alt={item.name}
             className="w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <ExternalLink className="w-6 h-6 text-white" />
+          </div>
         </div>
         <Button
           variant="ghost"
           size="icon"
           className="absolute top-2 right-2 bg-white/80 hover:bg-white/90 text-red-500"
+          onClick={() => handleRemoveFromFavorites(item.id, 'product')}
         >
           <Heart className="w-4 h-4 fill-current" />
         </Button>
@@ -113,8 +169,13 @@ export function FavoritesView() {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          <div>
-            <CardTitle className="text-lg line-clamp-2">{item.name}</CardTitle>
+          <div 
+            className="cursor-pointer"
+            onClick={() => handleProductNavigation(item.id)}
+          >
+            <CardTitle className="text-lg line-clamp-2 hover:text-primary transition-colors">
+              {item.name}
+            </CardTitle>
             <CardDescription className="text-sm line-clamp-2 mt-1">
               {item.description}
             </CardDescription>
@@ -143,11 +204,16 @@ export function FavoritesView() {
             <Button 
               className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
               disabled={!item.inStock}
+              onClick={() => handleAddToCart(item)}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
               {item.inStock ? '加入購物車' : '缺貨中'}
             </Button>
-            <Button variant="outline" size="icon">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => handleRemoveFromFavorites(item.id, 'product')}
+            >
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
@@ -159,17 +225,24 @@ export function FavoritesView() {
   const ServiceCard = ({ item }: { item: typeof favoriteServices[0] }) => (
     <Card className="border-0 shadow-soft bg-card/50 backdrop-blur-sm group hover:shadow-elegant transition-all duration-300">
       <CardHeader className="relative">
-        <div className="aspect-[4/3] rounded-lg bg-primary/10 flex items-center justify-center mb-3 overflow-hidden">
+        <div 
+          className="aspect-[4/3] rounded-lg bg-primary/10 flex items-center justify-center mb-3 overflow-hidden cursor-pointer group-hover:scale-105 transition-transform duration-300"
+          onClick={() => handleServiceNavigation(item.id)}
+        >
           <img 
             src={item.image} 
             alt={item.name}
             className="w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <ExternalLink className="w-6 h-6 text-white" />
+          </div>
         </div>
         <Button
           variant="ghost"
           size="icon"
           className="absolute top-2 right-2 bg-white/80 hover:bg-white/90 text-red-500"
+          onClick={() => handleRemoveFromFavorites(item.id, 'service')}
         >
           <Heart className="w-4 h-4 fill-current" />
         </Button>
@@ -181,8 +254,13 @@ export function FavoritesView() {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          <div>
-            <CardTitle className="text-lg line-clamp-2">{item.name}</CardTitle>
+          <div 
+            className="cursor-pointer"
+            onClick={() => handleServiceNavigation(item.id)}
+          >
+            <CardTitle className="text-lg line-clamp-2 hover:text-primary transition-colors">
+              {item.name}
+            </CardTitle>
             <CardDescription className="text-sm line-clamp-2 mt-1">
               {item.description}
             </CardDescription>
@@ -211,10 +289,17 @@ export function FavoritesView() {
           </div>
 
           <div className="flex gap-2">
-            <Button className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+            <Button 
+              className="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              onClick={() => handleBookNow(item)}
+            >
               立即預約
             </Button>
-            <Button variant="outline" size="icon">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => handleRemoveFromFavorites(item.id, 'service')}
+            >
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
@@ -233,13 +318,13 @@ export function FavoritesView() {
 
       <Tabs defaultValue="products" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 lg:w-[300px]">
-          <TabsTrigger value="products">收藏商品 ({favoriteProducts.length})</TabsTrigger>
-          <TabsTrigger value="services">收藏療程 ({favoriteServices.length})</TabsTrigger>
+          <TabsTrigger value="products">收藏商品 ({favoriteProductsList.length})</TabsTrigger>
+          <TabsTrigger value="services">收藏療程 ({favoriteServicesList.length})</TabsTrigger>
         </TabsList>
 
         {/* 收藏商品 */}
         <TabsContent value="products" className="space-y-4">
-          {favoriteProducts.length === 0 ? (
+          {favoriteProductsList.length === 0 ? (
             <Card className="border-0 shadow-soft bg-card/50 backdrop-blur-sm">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Heart className="w-12 h-12 text-muted-foreground mb-4" />
@@ -254,7 +339,7 @@ export function FavoritesView() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {favoriteProducts.map((product) => (
+              {favoriteProductsList.map((product) => (
                 <ProductCard key={product.id} item={product} />
               ))}
             </div>
@@ -263,7 +348,7 @@ export function FavoritesView() {
 
         {/* 收藏療程 */}
         <TabsContent value="services" className="space-y-4">
-          {favoriteServices.length === 0 ? (
+          {favoriteServicesList.length === 0 ? (
             <Card className="border-0 shadow-soft bg-card/50 backdrop-blur-sm">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Heart className="w-12 h-12 text-muted-foreground mb-4" />
@@ -278,7 +363,7 @@ export function FavoritesView() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favoriteServices.map((service) => (
+              {favoriteServicesList.map((service) => (
                 <ServiceCard key={service.id} item={service} />
               ))}
             </div>
