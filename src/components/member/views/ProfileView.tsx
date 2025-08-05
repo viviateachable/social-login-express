@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Phone, MapPin, Calendar, Edit, Camera, Bell, Shield, CreditCard } from 'lucide-react';
+import { User, Phone, MapPin, Calendar, Edit, Camera, Bell, Shield, CreditCard, Plus, Trash2, Clock, History } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,15 +8,31 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
+import { useAddresses, Address } from '@/hooks/useAddresses';
+import { AddressDialog } from '@/components/member/dialogs/AddressDialog';
+import { ChangePasswordDialog } from '@/components/member/dialogs/ChangePasswordDialog';
+import { LoginLogsDialog } from '@/components/member/dialogs/LoginLogsDialog';
+import { AvatarUploadDialog } from '@/components/member/dialogs/AvatarUploadDialog';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 export function ProfileView() {
   const { user } = useAuth();
+  const { addresses, loading: addressesLoading, addAddress, updateAddress, deleteAddress } = useAddresses();
+  
   const [isEditing, setIsEditing] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  
+  // Dialog states
+  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | undefined>(undefined);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [loginLogsDialogOpen, setLoginLogsDialogOpen] = useState(false);
+  const [avatarUploadDialogOpen, setAvatarUploadDialogOpen] = useState(false);
+  
   const [formData, setFormData] = useState({
     displayName: '王小美',
     phone: '0912345678',
     birthDate: '1990-05-15',
-    address: '台北市信義區信義路五段7號',
     bio: '熱愛SPA和精油護理，追求身心靈的平衡與放鬆。'
   });
 
@@ -61,6 +77,31 @@ export function ProfileView() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Address handlers
+  const handleAddAddress = () => {
+    setEditingAddress(undefined);
+    setAddressDialogOpen(true);
+  };
+
+  const handleEditAddress = (address: Address) => {
+    setEditingAddress(address);
+    setAddressDialogOpen(true);
+  };
+
+  const handleDeleteAddress = async (addressId: string) => {
+    if (confirm('確定要刪除這個地址嗎？')) {
+      await deleteAddress(addressId);
+    }
+  };
+
+  const handleAddressSubmit = async (addressData: Omit<Address, 'id'>) => {
+    if (editingAddress) {
+      return await updateAddress(editingAddress.id, addressData);
+    } else {
+      return await addAddress(addressData);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 頁面標題 */}
@@ -70,8 +111,9 @@ export function ProfileView() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+        <TabsList className="grid w-full grid-cols-5 lg:w-[600px]">
           <TabsTrigger value="profile">個人資料</TabsTrigger>
+          <TabsTrigger value="addresses">收件地址</TabsTrigger>
           <TabsTrigger value="notifications">通知設定</TabsTrigger>
           <TabsTrigger value="security">安全設定</TabsTrigger>
           <TabsTrigger value="payment">付款方式</TabsTrigger>
@@ -97,13 +139,17 @@ export function ProfileView() {
               {/* 頭像 */}
               <div className="flex items-center gap-6">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                    <User className="w-12 h-12 text-primary-foreground" />
-                  </div>
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={avatarUrl} alt="用戶頭像" />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-secondary">
+                      <User className="w-12 h-12 text-primary-foreground" />
+                    </AvatarFallback>
+                  </Avatar>
                   <Button
                     size="icon"
                     variant="secondary"
                     className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full"
+                    onClick={() => setAvatarUploadDialogOpen(true)}
                   >
                     <Camera className="w-4 h-4" />
                   </Button>
@@ -159,15 +205,6 @@ export function ProfileView() {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="address">地址</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="bio">個人簡介</Label>
@@ -179,6 +216,100 @@ export function ProfileView() {
                   rows={3}
                 />
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 收件地址 */}
+        <TabsContent value="addresses" className="space-y-6">
+          <Card className="border-0 shadow-soft bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    收件地址
+                  </CardTitle>
+                  <CardDescription>
+                    管理您的收件地址
+                  </CardDescription>
+                </div>
+                <Button 
+                  onClick={handleAddAddress}
+                  className="bg-gradient-to-r from-primary to-secondary"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  新增地址
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {addressesLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-pulse text-muted-foreground">載入中...</div>
+                </div>
+              ) : addresses.length === 0 ? (
+                <div className="text-center py-8">
+                  <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">尚未新增任何地址</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleAddAddress}
+                    className="mt-4"
+                  >
+                    新增第一個地址
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {addresses.map((address) => (
+                    <div 
+                      key={address.id} 
+                      className="p-4 rounded-lg border border-border bg-background/50"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{address.name}</span>
+                            {address.is_default && (
+                              <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded">
+                                預設
+                              </span>
+                            )}
+                          </div>
+                          {address.phone && (
+                            <p className="text-sm text-muted-foreground">{address.phone}</p>
+                          )}
+                          <p className="text-sm">
+                            {address.address_line_1}
+                            {address.address_line_2 && `, ${address.address_line_2}`}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {address.city} {address.postal_code}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditAddress(address)}
+                          >
+                            編輯
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteAddress(address.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -307,9 +438,21 @@ export function ProfileView() {
                 </div>
               </div>
               
-              <div className="pt-4 border-t">
-                <Button variant="outline" className="w-full mb-3">
+              <div className="pt-4 border-t space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setChangePasswordDialogOpen(true)}
+                >
                   更改密碼
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setLoginLogsDialogOpen(true)}
+                >
+                  <History className="w-4 h-4 mr-2" />
+                  登入記錄
                 </Button>
                 <Button variant="outline" className="w-full">
                   下載個人資料
@@ -371,6 +514,32 @@ export function ProfileView() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <AddressDialog
+        open={addressDialogOpen}
+        onOpenChange={setAddressDialogOpen}
+        onSubmit={handleAddressSubmit}
+        address={editingAddress}
+        title={editingAddress ? '編輯地址' : '新增地址'}
+      />
+
+      <ChangePasswordDialog
+        open={changePasswordDialogOpen}
+        onOpenChange={setChangePasswordDialogOpen}
+      />
+
+      <LoginLogsDialog
+        open={loginLogsDialogOpen}
+        onOpenChange={setLoginLogsDialogOpen}
+      />
+
+      <AvatarUploadDialog
+        open={avatarUploadDialogOpen}
+        onOpenChange={setAvatarUploadDialogOpen}
+        currentAvatarUrl={avatarUrl}
+        onAvatarUpdate={setAvatarUrl}
+      />
     </div>
   );
 }
