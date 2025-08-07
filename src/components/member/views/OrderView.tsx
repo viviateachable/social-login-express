@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Package, Truck, Check, X, Star, RotateCcw, Eye, ShoppingCart, Info } from 'lucide-react';
+import { Package, Truck, Check, X, Star, RotateCcw, Eye, ShoppingCart, Info, CreditCard } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { ImmediatePaymentDialog } from '@/components/member/dialogs/ImmediatePaymentDialog';
+import { TrackPackageDialog } from '@/components/member/dialogs/TrackPackageDialog';
+import { ReturnRequestDialog } from '@/components/member/dialogs/ReturnRequestDialog';
+import { RepurchaseDialog } from '@/components/member/dialogs/RepurchaseDialog';
 
 export function OrderView() {
   const { toast } = useToast();
@@ -13,63 +17,119 @@ export function OrderView() {
   const orders = [
     {
       id: '202401001',
+      order_number: '202401001',
       date: '2024-01-22',
-      status: 'shipping',
-      total: 2850,
+      status: 'pending',
+      total_amount: 2850,
       items: [
         {
+          id: 'item001',
           name: '薰衣草精油 10ml',
           price: 850,
           quantity: 2,
           image: '/placeholder.svg'
         },
         {
+          id: 'item002', 
           name: '玫瑰果護膚油 30ml',
           price: 1150,
           quantity: 1,
           image: '/placeholder.svg'
         }
       ],
-      trackingNumber: 'SF123456789',
-      estimatedDelivery: '2024-01-25'
+      shipping_info: {
+        name: '王小明',
+        phone: '0912345678',
+        address: '台北市中正區忠孝東路一段100號',
+        email: 'wang@example.com'
+      }
     },
     {
       id: '202401002',
-      date: '2024-01-18',
-      status: 'delivered',
-      total: 1680,
+      order_number: '202401002',
+      date: '2024-01-22',
+      status: 'shipping',
+      total_amount: 2850,
       items: [
         {
+          id: 'item003',
+          name: '薰衣草精油 10ml',
+          price: 850,
+          quantity: 2,
+          image: '/placeholder.svg'
+        },
+        {
+          id: 'item004',
+          name: '玫瑰果護膚油 30ml',
+          price: 1150,
+          quantity: 1,
+          image: '/placeholder.svg'
+        }
+      ],
+      tracking_number: 'SF123456789',
+      estimated_delivery: '2024-01-25',
+      shipping_company: '黑貓宅急便',
+      shipping_info: {
+        name: '王小明',
+        phone: '0912345678',
+        address: '台北市中正區忠孝東路一段100號',
+        email: 'wang@example.com'
+      }
+    },
+    {
+      id: '202401003',
+      order_number: '202401003',
+      date: '2024-01-18',
+      status: 'delivered',
+      total_amount: 1680,
+      items: [
+        {
+          id: 'item005',
           name: '茶樹精油 15ml',
           price: 680,
           quantity: 1,
           image: '/placeholder.svg'
         },
         {
+          id: 'item006',
           name: '有機護手霜',
           price: 500,
           quantity: 2,
           image: '/placeholder.svg'
         }
       ],
-      deliveredDate: '2024-01-20',
+      delivered_date: '2024-01-20',
       rating: 5,
-      review: '商品品質很好，包裝精美！'
+      review: '商品品質很好，包裝精美！',
+      shipping_info: {
+        name: '王小明',
+        phone: '0912345678',
+        address: '台北市中正區忠孝東路一段100號',
+        email: 'wang@example.com'
+      }
     },
     {
-      id: '202401003',
+      id: '202401004',
+      order_number: '202401004', 
       date: '2024-01-15',
       status: 'cancelled',
-      total: 920,
+      total_amount: 920,
       items: [
         {
+          id: 'item007',
           name: '橙花精油 10ml',
           price: 920,
           quantity: 1,
           image: '/placeholder.svg'
         }
       ],
-      cancelReason: '庫存不足，已全額退款'
+      cancel_reason: '庫存不足，已全額退款',
+      shipping_info: {
+        name: '王小明',
+        phone: '0912345678',
+        address: '台北市中正區忠孝東路一段100號',
+        email: 'wang@example.com'
+      }
     }
   ];
 
@@ -114,8 +174,8 @@ export function OrderView() {
     const itemCount = order.items.reduce((total, item) => total + item.quantity, 0);
     
     toast({
-      title: "已加入購物車",
-      description: `已將 ${itemCount} 件商品加入購物車，總金額 NT$ ${order.total.toLocaleString()}`,
+      title: "已加入購物車", 
+      description: `已將 ${itemCount} 件商品加入購物車，總金額 NT$ ${order.total_amount.toLocaleString()}`,
     });
   };
 
@@ -156,34 +216,34 @@ export function OrderView() {
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">訂單總額</label>
-              <p className="text-lg font-semibold text-secondary">NT$ {order.total.toLocaleString()}</p>
+              <p className="text-lg font-semibold text-secondary">NT$ {order.total_amount.toLocaleString()}</p>
             </div>
           </div>
 
           {/* 配送資訊 */}
-          {(order.trackingNumber || order.estimatedDelivery || order.deliveredDate) && (
+          {(order.tracking_number || order.estimated_delivery || order.delivered_date) && (
             <div className="border rounded-lg p-4 bg-accent/20">
               <h4 className="font-medium mb-3 flex items-center gap-2">
                 <Truck className="w-4 h-4" />
                 配送資訊
               </h4>
               <div className="space-y-2">
-                {order.trackingNumber && (
+                {order.tracking_number && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">物流單號:</span>
-                    <span className="font-mono">{order.trackingNumber}</span>
+                    <span className="font-mono">{order.tracking_number}</span>
                   </div>
                 )}
-                {order.estimatedDelivery && (
+                {order.estimated_delivery && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">預計送達:</span>
-                    <span>{order.estimatedDelivery}</span>
+                    <span>{order.estimated_delivery}</span>
                   </div>
                 )}
-                {order.deliveredDate && (
+                {order.delivered_date && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">送達日期:</span>
-                    <span>{order.deliveredDate}</span>
+                    <span>{order.delivered_date}</span>
                   </div>
                 )}
               </div>
@@ -224,7 +284,7 @@ export function OrderView() {
             <div className="flex justify-between items-center pt-4 border-t mt-4">
               <span className="font-medium">總計</span>
               <span className="text-xl font-bold text-secondary">
-                NT$ {order.total.toLocaleString()}
+                NT$ {order.total_amount.toLocaleString()}
               </span>
             </div>
           </div>
@@ -251,32 +311,52 @@ export function OrderView() {
           )}
 
           {/* 取消原因 */}
-          {order.cancelReason && (
+          {order.cancel_reason && (
             <div className="border rounded-lg p-4 bg-red-50 border-red-200">
               <h4 className="font-medium mb-2 flex items-center gap-2 text-red-700">
                 <Info className="w-4 h-4" />
                 取消原因
               </h4>
-              <p className="text-sm text-red-600">{order.cancelReason}</p>
+              <p className="text-sm text-red-600">{order.cancel_reason}</p>
             </div>
           )}
 
           {/* 操作按鈕 */}
-          <div className="flex gap-2 pt-4 border-t">
-            {order.status === 'delivered' && (
-              <Button 
-                onClick={() => handleRepurchase(order)}
-                className="bg-gradient-to-r from-primary to-secondary"
-              >
-                <ShoppingCart className="w-4 h-4 mr-1" />
-                再次購買
-              </Button>
+          <div className="flex flex-wrap gap-2 pt-4 border-t">
+            {order.status === 'pending' && (
+              <ImmediatePaymentDialog order={order}>
+                <Button className="bg-gradient-to-r from-green-500 to-green-600">
+                  <CreditCard className="w-4 h-4 mr-1" />
+                  立即付款
+                </Button>
+              </ImmediatePaymentDialog>
             )}
+            
             {order.status === 'shipping' && (
-              <Button variant="outline">
-                <Truck className="w-4 h-4 mr-1" />
-                追蹤物流
-              </Button>
+              <TrackPackageDialog order={order}>
+                <Button variant="outline">
+                  <Truck className="w-4 h-4 mr-1" />
+                  追蹤包裹
+                </Button>
+              </TrackPackageDialog>
+            )}
+            
+            {order.status === 'delivered' && (
+              <>
+                <RepurchaseDialog order={order}>
+                  <Button className="bg-gradient-to-r from-primary to-secondary">
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    再次購買
+                  </Button>
+                </RepurchaseDialog>
+                
+                <ReturnRequestDialog order={order}>
+                  <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
+                    <RotateCcw className="w-4 h-4 mr-1" />
+                    申請退貨
+                  </Button>
+                </ReturnRequestDialog>
+              </>
             )}
           </div>
         </div>
@@ -326,27 +406,27 @@ export function OrderView() {
 
           {/* 訂單資訊 */}
           <div className="space-y-2 mb-4">
-            {order.trackingNumber && (
+            {order.tracking_number && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">物流單號:</span>
-                <span className="font-mono">{order.trackingNumber}</span>
+                <span className="font-mono">{order.tracking_number}</span>
               </div>
             )}
-            {order.estimatedDelivery && (
+            {order.estimated_delivery && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">預計送達:</span>
-                <span>{order.estimatedDelivery}</span>
+                <span>{order.estimated_delivery}</span>
               </div>
             )}
-            {order.deliveredDate && (
+            {order.delivered_date && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">送達日期:</span>
-                <span>{order.deliveredDate}</span>
+                <span>{order.delivered_date}</span>
               </div>
             )}
-            {order.cancelReason && (
+            {order.cancel_reason && (
               <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                {order.cancelReason}
+                {order.cancel_reason}
               </div>
             )}
           </div>
@@ -371,30 +451,59 @@ export function OrderView() {
           {/* 總金額和操作按鈕 */}
           <div className="flex items-center justify-between pt-4 border-t border-border">
             <div className="text-lg font-semibold text-secondary">
-              總計: NT$ {order.total.toLocaleString()}
+              總計: NT$ {order.total_amount.toLocaleString()}
             </div>
-            <div className="flex gap-2">
-              {order.status === 'shipping' && (
-                <Button variant="outline" size="sm">
-                  追蹤物流
-                </Button>
+            <div className="flex flex-wrap gap-2">
+              {order.status === 'pending' && (
+                <ImmediatePaymentDialog order={order}>
+                  <Button size="sm" className="bg-gradient-to-r from-green-500 to-green-600">
+                    <CreditCard className="w-4 h-4 mr-1" />
+                    立即付款
+                  </Button>
+                </ImmediatePaymentDialog>
               )}
+              
+              {order.status === 'shipping' && (
+                <TrackPackageDialog order={order}>
+                  <Button variant="outline" size="sm">
+                    <Truck className="w-4 h-4 mr-1" />
+                    追蹤包裹
+                  </Button>
+                </TrackPackageDialog>
+              )}
+              
               {order.status === 'delivered' && !order.rating && (
                 <Button size="sm" className="bg-gradient-to-r from-primary to-secondary">
                   <Star className="w-4 h-4 mr-1" />
                   評價商品
                 </Button>
               )}
+              
               {order.status === 'delivered' && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleRepurchase(order)}
-                >
-                  <RotateCcw className="w-4 h-4 mr-1" />
-                  再次購買
-                </Button>
+                <>
+                  <RepurchaseDialog order={order}>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      再次購買
+                    </Button>
+                  </RepurchaseDialog>
+                  
+                  <ReturnRequestDialog order={order}>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      申請退貨
+                    </Button>
+                  </ReturnRequestDialog>
+                </>
               )}
+              
               <OrderDetailsDialog order={order} />
             </div>
           </div>
